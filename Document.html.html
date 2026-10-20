@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kutikuti Client Hub - Agency OS</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Chart.js CDN for interactive Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #invoice-printable, #invoice-printable * {
+        visibility: visible;
+      }
+      #invoice-printable {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      #invoice-printable .text-white, 
+      #invoice-printable .text-slate-200, 
+      #invoice-printable .text-slate-300 {
+        color: #111827 !important;
+      }
+      #invoice-printable .text-slate-400, 
+      #invoice-printable .text-slate-500 {
+        color: #4b5563 !important;
+      }
+      #invoice-printable .border-slate-800 {
+        border-color: #e5e7eb !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center font-black text-xl tracking-wider text-white shadow-lg shadow-indigo-500/25">
+          K
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+            Kutikuti Client Hub
+            <span class="text-[10px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider">Enterprise Agency OS</span>
+          </h1>
+          <p class="text-xs text-slate-400">Campaigns, Spends, Approvals & Automated Billing</p>
+        </div>
+      </div>
+
+      <!-- Controls & Quick Metrics -->
+      <div class="flex items-center gap-4">
+        <!-- Currency Selector -->
+        <div class="flex items-center bg-slate-800/70 p-1 rounded-lg border border-slate-700/60 text-xs">
+          <button id="curr-bdt" onclick="setCurrency('BDT')" class="px-2.5 py-1 rounded bg-indigo-600 font-bold text-white transition">৳ BDT</button>
+          <button id="curr-usd" onclick="setCurrency('USD')" class="px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium transition">$ USD</button>
+        </div>
+
+        <!-- Quick Stats Badge -->
+        <div class="hidden lg:flex items-center gap-4 text-xs border-l border-slate-800 pl-4">
+          <div>
+            <span class="text-slate-400">Clients:</span>
+            <span class="ml-1 font-bold text-slate-200" id="header-client-count">3</span>
+          </div>
+          <div>
+            <span class="text-slate-400">Today's Meta Spend:</span>
+            <span class="ml-1 font-bold text-emerald-400" id="header-today-spend">৳৯,৮৪০</span>
+          </div>
+          <div>
+            <span class="text-slate-400">Pending Review:</span>
+            <span class="ml-1 font-bold text-amber-400" id="header-pending-count">1</span>
+          </div>
+        </div>
+
+        <button onclick="openClientModal()" class="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-2 rounded-lg transition shadow-lg shadow-indigo-600/20">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Client
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 flex flex-col gap-6">
+
+    <!-- SUB-NAV / TABS -->
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 gap-2 overflow-x-auto">
+      <div class="flex gap-2">
+        <button onclick="switchTab('clients')" id="tab-btn-clients" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold text-xs sm:text-sm transition">
+          <i data-lucide="users" class="w-4 h-4"></i> Client Dossier
+        </button>
+        <button onclick="switchTab('spends')" id="tab-btn-spends" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 font-semibold text-xs sm:text-sm transition">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Ad Spends & KPIs
+        </button>
+        <button onclick="switchTab('pipeline')" id="tab-btn-pipeline" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 font-semibold text-xs sm:text-sm transition">
+          <i data-lucide="check-square" class="w-4 h-4"></i> Content Approval Pipeline
+        </button>
+        <button onclick="switchTab('invoicing')" id="tab-btn-invoicing" class="tab-btn flex items-center gap-2 px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 font-semibold text-xs sm:text-sm transition">
+          <i data-lucide="receipt" class="w-4 h-4"></i> Invoicing & Reports
+        </button>
+      </div>
+
+      <div class="relative w-64 hidden md:block">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+        <input type="text" id="clientSearchInput" oninput="handleSearch(this.value)" placeholder="Search clients, niche..." class="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500">
+      </div>
+    </div>
+
+    <!-- ==================== TAB 1: CLIENT DOSSIER ==================== -->
+    <section id="tab-view-clients" class="tab-view space-y-6">
+      <!-- Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5" id="clientsGrid">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: AD SPENDS & KPI MONITOR ==================== -->
+    <section id="tab-view-spends" class="tab-view hidden space-y-6">
+      <!-- 4 Stat Counters -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-medium">Daily Ad Spend (Total)</span>
+          <h3 class="text-2xl font-bold text-white mt-1" id="stat-total-spend">৳৯,৮৪০</h3>
+          <p class="text-xs text-emerald-400 mt-2 flex items-center gap-1 font-medium">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> 14.2% within budget allocation
+          </p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-medium">Total Messages & Leads</span>
+          <h3 class="text-2xl font-bold text-white mt-1">১৬৫ টি</h3>
+          <p class="text-xs text-indigo-400 mt-2 font-medium">Meta Messenger + Lead Forms</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-medium">Avg. Cost Per Lead / Msg</span>
+          <h3 class="text-2xl font-bold text-white mt-1" id="stat-avg-cpm">৳৫৯.৬৩</h3>
+          <p class="text-xs text-slate-400 mt-2">Target CPM Benchmark: &lt; ৳৬৫</p>
+        </div>
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+          <span class="text-xs text-slate-400 font-medium">Account Ad Health</span>
+          <h3 class="text-2xl font-bold text-emerald-400 mt-1">3.4x ROAS</h3>
+          <p class="text-xs text-emerald-400 mt-2">High Relevancy Score (8.9/10)</p>
+        </div>
+      </div>
+
+      <!-- Interactive Chart -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+          <div>
+            <h3 class="font-bold text-white text-sm">Campaign Spend vs Lead Volume (Past 7 Days)</h3>
+            <p class="text-xs text-slate-400">Interactive trend across active Meta ad sets</p>
+          </div>
+          <span class="text-xs bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700">Daily Sync Active</span>
+        </div>
+        <div class="h-64 w-full">
+          <canvas id="spendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Active Ad Sets Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+          <h3 class="font-bold text-white text-sm">Campaign Breakdown by Account</h3>
+          <span class="text-xs text-indigo-400 font-medium">Updated 18m ago</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm text-slate-300">
+            <thead class="bg-slate-950/70 text-slate-400 text-xs uppercase border-b border-slate-800 font-semibold">
+              <tr>
+                <th class="p-3.5">Client & Campaign</th>
+                <th class="p-3.5">Target Objective</th>
+                <th class="p-3.5">Daily Budget</th>
+                <th class="p-3.5">Spent Today</th>
+                <th class="p-3.5">Results</th>
+                <th class="p-3.5">Cost/Result</th>
+                <th class="p-3.5 text-right">Ad Health</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-medium text-xs">
+              <tr class="hover:bg-slate-800/40 transition">
+                <td class="p-3.5 font-bold text-white">Shadmart Fashion<br><span class="text-[11px] font-normal text-slate-400">Winter Jackets Flash Promo</span></td>
+                <td class="p-3.5">Messenger Sales</td>
+                <td class="p-3.5">৳৫,০০০</td>
+                <td class="p-3.5 text-emerald-400 font-bold">৳৪,২০০</td>
+                <td class="p-3.5">৮৪ Messages</td>
+                <td class="p-3.5">৳৫০.০০</td>
+                <td class="p-3.5 text-right"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Scalable</span></td>
+              </tr>
+              <tr class="hover:bg-slate-800/40 transition">
+                <td class="p-3.5 font-bold text-white">Chui Jhal Bistro<br><span class="text-[11px] font-normal text-slate-400">Weekend Dinner Reels Ad</span></td>
+                <td class="p-3.5">Local Footfall & Reach</td>
+                <td class="p-3.5">৳২,৫০০</td>
+                <td class="p-3.5 text-emerald-400 font-bold">৳২,১০০</td>
+                <td class="p-3.5">৩২ Bookings</td>
+                <td class="p-3.5">৳৬৫.৬২</td>
+                <td class="p-3.5 text-right"><span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">Optimal</span></td>
+              </tr>
+              <tr class="hover:bg-slate-800/40 transition">
+                <td class="p-3.5 font-bold text-white">TechVerse Academy<br><span class="text-[11px] font-normal text-slate-400">Fullstack Bootcamp Lead Form</span></td>
+                <td class="p-3.5">Lead Generation</td>
+                <td class="p-3.5">৳৪,০০০</td>
+                <td class="p-3.5 text-amber-400 font-bold">৳৩,৫৪০</td>
+                <td class="p-3.5">৪৯ Submissions</td>
+                <td class="p-3.5">৳৭২.২৪</td>
+                <td class="p-3.5 text-right"><span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold">Watch CPA</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: CONTENT PIPELINE (KANBAN) ==================== -->
+    <section id="tab-view-pipeline" class="tab-view hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="font-bold text-white text-base">Content Pre-Upload Calendar & Kanban</h2>
+          <p class="text-xs text-slate-400">Review graphics and approve captions before Meta publication</p>
+        </div>
+        <button onclick="addNewCreativePrompt()" class="text-xs bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 px-3 py-1.5 rounded-lg transition font-medium flex items-center gap-1.5">
+          <i data-lucide="image-plus" class="w-3.5 h-3.5"></i> Add New Creative
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="pipelineContainer">
+        
+        <!-- Column 1: In Review -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span> Client Review Pending
+            </h4>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono" id="pipeline-pending-badge">1</span>
+          </div>
+
+          <div id="pending-cards-list" class="space-y-3">
+            <div id="card-creative-1" class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md hover:border-slate-700 transition">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded">Shadmart Fashion</span>
+                <span class="text-[10px] text-slate-400">Tomorrow 7:00 PM</span>
+              </div>
+              <h5 class="text-xs font-bold text-slate-200">"প্রিমিয়াম উইন্টার কালেকশন ২০২৬ ফ্ল্যাশ সেল ব্যানার"</h5>
+              <div class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800/80 text-[11px] text-slate-300 italic leading-relaxed">
+                "সব ডিজাইনে ৩০% বিশেষ ছাড়! স্টক ফুরিয়ে যাওয়ার আগেই অর্ডার করতে নিচের 'Send Message' বাটনে ক্লিক করে ইনবক্স করুন।"
+              </div>
+              <div class="flex gap-2 pt-2">
+                <button onclick="approveCard('card-creative-1', 'Shadmart Fashion', 'প্রিমিয়াম উইন্টার কালেকশন')" class="flex-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 rounded-lg transition flex items-center justify-center gap-1">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i> Client Approved
+                </button>
+                <button onclick="requestChanges('Shadmart Fashion')" class="px-3 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-2 rounded-lg transition">
+                  Revise
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Approved -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Approved / Scheduled
+            </h4>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono" id="pipeline-approved-badge">1</span>
+          </div>
+
+          <div id="approved-cards-list" class="space-y-3">
+            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded">Chui Jhal Bistro</span>
+                <span class="text-[10px] text-slate-400">Friday 1:00 PM</span>
+              </div>
+              <h5 class="text-xs font-bold text-slate-200">"খুলনার খাঁটি চুইঝাল স্পেশাল বিফ রান্না রিলস ভিডিও"</h5>
+              <div class="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Approved by Owner via WhatsApp
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3: Live / Published -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-slate-500"></span> Live on Meta (This Week)
+            </h4>
+            <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">2</span>
+          </div>
+
+          <div class="space-y-3">
+            <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs text-slate-300 space-y-1">
+              <span class="text-[10px] font-bold text-indigo-400">TechVerse Academy</span>
+              <p class="font-semibold text-white">Batch 08 Admission Enrollment Carousel</p>
+              <p class="text-[11px] text-slate-400">Status: Running smoothly (49 leads collected)</p>
+            </div>
+            <div class="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs text-slate-300 space-y-1">
+              <span class="text-[10px] font-bold text-indigo-400">Shadmart Fashion</span>
+              <p class="font-semibold text-white">Friday Mega Discount Feed Post</p>
+              <p class="text-[11px] text-slate-400">Status: Completed campaign cycle</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: AUTOMATED INVOICING & REPORTS ==================== -->
+    <section id="tab-view-invoicing" class="tab-view hidden space-y-6">
+      
+      <!-- Controls -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800">
+        <div>
+          <h3 class="font-bold text-white text-sm">Automated Billing & WhatsApp Dispatch</h3>
+          <p class="text-xs text-slate-400">Generate PDF invoices and pre-filled progress messages</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="sendWhatsAppSummary()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-emerald-600/20">
+            <i data-lucide="message-circle" class="w-4 h-4"></i> Send WhatsApp Report
+          </button>
+          <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition shadow-lg shadow-indigo-600/20">
+            <i data-lucide="printer" class="w-4 h-4"></i> Print / PDF Export
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Invoice Document -->
+      <div id="invoice-printable" class="bg-slate-900 border border-slate-800 p-8 rounded-2xl max-w-3xl mx-auto shadow-2xl space-y-6">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b border-slate-800 pb-6">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">K</div>
+              <h2 class="text-2xl font-black text-indigo-400 tracking-tight">KUTIKUTI MEDIA</h2>
+            </div>
+            <p class="text-xs text-slate-400 font-medium">Digital Marketing & Meta Performance Agency</p>
+            <p class="text-xs text-slate-500">Sector 11, Uttara, Dhaka-1230, Bangladesh</p>
+          </div>
+          <div class="text-right">
+            <span class="text-xs px-2.5 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold uppercase tracking-wider">Official Invoice</span>
+            <p class="text-xs font-mono text-slate-300 font-bold mt-2">#INV-2026-KK89</p>
+            <p class="text-xs text-slate-400">Date: October 20, 2026</p>
+          </div>
+        </div>
+
+        <!-- Bill Details -->
+        <div class="grid grid-cols-2 gap-4 py-2 text-xs">
+          <div>
+            <span class="text-slate-500 uppercase tracking-wider font-bold">Client / Billed To:</span>
+            <h4 class="font-bold text-slate-100 mt-1 text-sm">Shadmart Fashion Ltd.</h4>
+            <p class="text-slate-400">Attn: Managing Director</p>
+            <p class="text-slate-400">Dhaka, Bangladesh</p>
+            <p class="text-slate-400 font-mono">+880 1711-000000</p>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-500 uppercase tracking-wider font-bold">Service Period & Terms:</span>
+            <p class="font-bold text-slate-200 mt-1">Oct 01, 2026 – Oct 31, 2026</p>
+            <p class="text-emerald-400 font-bold mt-1">Payment Status: Paid in Full</p>
+            <p class="text-slate-400">Method: bKash Merchant / Bank</p>
+          </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="border-t border-b border-slate-800 py-2">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead>
+              <tr class="text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+                <th class="py-3">Deliverable Item</th>
+                <th class="py-3 text-right">Qty</th>
+                <th class="py-3 text-right">Rate</th>
+                <th class="py-3 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-medium">
+              <tr>
+                <td class="py-3.5 font-bold text-white">Meta Ads Strategy & Daily Campaign Management<br><span class="font-normal text-slate-400 text-[11px]">Budget allocation, audience testing & daily ROAS monitoring</span></td>
+                <td class="py-3.5 text-right font-mono">1 Mo</td>
+                <td class="py-3.5 text-right font-mono">৳১৫,০০০</td>
+                <td class="py-3.5 text-right font-bold text-white font-mono">৳১৫,০০০</td>
+              </tr>
+              <tr>
+                <td class="py-3.5 font-bold text-white">Visual Content Creation & Copywriting<br><span class="font-normal text-slate-400 text-[11px]">12 Custom Ad Banners + 4 High-engagement Reels</span></td>
+                <td class="py-3.5 text-right font-mono">1 Mo</td>
+                <td class="py-3.5 text-right font-mono">৳১০,০০০</td>
+                <td class="py-3.5 text-right font-bold text-white font-mono">৳১০,০০০</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totals & Notes -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-4">
+          <div class="text-xs text-slate-400 space-y-1">
+            <p class="font-semibold text-slate-300">Authorized Agency Signature:</p>
+            <p class="italic text-indigo-400 font-serif text-sm pt-1">Syada Afrida Maisha Jarin</p>
+            <p class="text-[10px] text-slate-500">Founder & Media Lead, Kutikuti Media</p>
+          </div>
+          <div class="text-right space-y-1 w-full sm:w-auto">
+            <div class="flex justify-between sm:justify-end gap-6 text-xs text-slate-400">
+              <span>Subtotal:</span>
+              <span class="font-mono text-slate-200">৳২৫,০০০</span>
+            </div>
+            <div class="flex justify-between sm:justify-end gap-6 text-xs text-slate-400">
+              <span>Agency VAT / Tax:</span>
+              <span class="font-mono text-slate-200">৳০.০০</span>
+            </div>
+            <div class="flex justify-between sm:justify-end gap-6 text-sm font-bold text-white border-t border-slate-800 pt-1.5">
+              <span>Grand Total:</span>
+              <span class="font-mono text-indigo-400 text-base">৳২৫,০০০ BDT</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== ADD CLIENT MODAL ==================== -->
+  <div id="clientModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-sm">Onboard New Client Dossier</h3>
+        <button onclick="closeClientModal()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+      </div>
+
+      <form onsubmit="handleNewClientSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold">Client / Business Name</label>
+          <input type="text" id="m-name" required placeholder="e.g. Vintage Leather BD" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold">Category / Industry</label>
+          <input type="text" id="m-category" required placeholder="e.g. Leather Goods, Retail" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold">Monthly Retainer Budget (BDT)</label>
+          <input type="number" id="m-fee" required placeholder="20000" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1 font-semibold">Deliverables Scope</label>
+          <input type="text" id="m-deliverables" required placeholder="e.g. 10 Creatives, Messenger Ads, Ad Spend Audit" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="pt-3 flex justify-end gap-2">
+          <button type="button" onclick="closeClientModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold transition shadow-lg shadow-indigo-600/20">Add Client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC & CHARTS -->
+  <script>
+    let currentCurrency = 'BDT';
+    const USD_RATE = 120; // 1 USD = 120 BDT
+
+    // Client Dataset
+    let clientsData = [
+      {
+        id: 'c1',
+        name: "Shadmart Fashion",
+        category: "Clothing & E-Commerce",
+        feeBDT: 25000,
+        deliverables: "12 Creatives, Meta Retargeting & Messenger Campaigns",
+        todaySpendBDT: 4200,
+        leads: "৮৪ Messages",
+        status: "Active",
+        renewalDays: 11,
+        phone: "+8801711000000"
+      },
+      {
+        id: 'c2',
+        name: "Chui Jhal Bistro",
+        category: "Restaurant & Food",
+        feeBDT: 18000,
+        deliverables: "8 Reels, Local Footfall Ad, Weekly Lead Reports",
+        todaySpendBDT: 2100,
+        leads: "৩২ Bookings",
+        status: "Active",
+        renewalDays: 19,
+        phone: "+8801811000000"
+      },
+      {
+        id: 'c3',
+        name: "TechVerse Academy",
+        category: "EdTech & Courses",
+        feeBDT: 30000,
+        deliverables: "Meta Lead Gen Funnel, Landing Page Audit, Ad Creative",
+        todaySpendBDT: 3540,
+        leads: "৪৯ Leads",
+        status: "Active",
+        renewalDays: 5,
+        phone: "+8801911000000"
+      }
+    ];
+
+    // Format Currency Helper
+    function formatMoney(amountBDT) {
+      if (currentCurrency === 'USD') {
+        const usdVal = (amountBDT / USD_RATE).toFixed(1);
+        return `$${usdVal}`;
+      }
+      return `৳${amountBDT.toLocaleString()}`;
+    }
+
+    // Render Clients
+    function renderClientCards(items = clientsData) {
+      const container = document.getElementById('clientsGrid');
+      if (!items.length) {
+        container.innerHTML = `<div class="col-span-3 text-center py-12 text-slate-500 text-xs">No matching clients found.</div>`;
+        return;
+      }
+
+      container.innerHTML = items.map(c => `
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between gap-4 hover:border-slate-700 transition">
+          <div>
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">${c.category}</span>
+                <h3 class="text-base font-bold text-white mt-2">${c.name}</h3>
+              </div>
+              <span class="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-semibold">${c.status}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-3 leading-relaxed">${c.deliverables}</p>
+          </div>
+
+          <div class="border-t border-slate-800/80 pt-4 space-y-2 text-xs">
+            <div class="flex justify-between text-slate-400">
+              <span>Retainer Fee:</span>
+              <span class="font-bold text-slate-200 font-mono">${formatMoney(c.feeBDT)} / mo</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Today's Meta Spent:</span>
+              <span class="font-semibold text-emerald-400 font-mono">${formatMoney(c.todaySpendBDT)} (${c.leads})</span>
+            </div>
+            <div class="flex justify-between text-slate-500 text-[11px] pt-1">
+              <span>Contract Renewal:</span>
+              <span class="text-amber-400 font-medium">${c.renewalDays} days remaining</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('header-client-count').innerText = clientsData.length;
+    }
+
+    // Currency Switcher
+    function setCurrency(curr) {
+      currentCurrency = curr;
+      const bdtBtn = document.getElementById('curr-bdt');
+      const usdBtn = document.getElementById('curr-usd');
+
+      if (curr === 'USD') {
+        usdBtn.className = "px-2.5 py-1 rounded bg-indigo-600 font-bold text-white transition";
+        bdtBtn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium transition";
+        document.getElementById('header-today-spend').innerText = "$82.0";
+        document.getElementById('stat-total-spend').innerText = "$82.0";
+        document.getElementById('stat-avg-cpm').innerText = "$0.50";
+      } else {
+        bdtBtn.className = "px-2.5 py-1 rounded bg-indigo-600 font-bold text-white transition";
+        usdBtn.className = "px-2.5 py-1 rounded text-slate-400 hover:text-white font-medium transition";
+        document.getElementById('header-today-spend').innerText = "৳৯,৮৪০";
+        document.getElementById('stat-total-spend').innerText = "৳৯,৮৪০";
+        document.getElementById('stat-avg-cpm').innerText = "৳৫৯.৬৩";
+      }
+      renderClientCards();
+    }
+
+    // Switch Tabs
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-400');
+      });
+
+      document.getElementById(`tab-view-${tab}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tab}`);
+      activeBtn.classList.add('bg-indigo-600', 'text-white');
+      activeBtn.classList.remove('text-slate-400');
+
+      if (tab === 'spends') {
+        renderSpendChart();
+      }
+      lucide.createIcons();
+    }
+
+    // Modal Handlers
+    function openClientModal() {
+      document.getElementById('clientModal').classList.remove('hidden');
+    }
+    function closeClientModal() {
+      document.getElementById('clientModal').classList.add('hidden');
+    }
+
+    function handleNewClientSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('m-name').value;
+      const category = document.getElementById('m-category').value;
+      const fee = Number(document.getElementById('m-fee').value);
+      const deliverables = document.getElementById('m-deliverables').value;
+
+      clientsData.push({
+        id: 'c_' + Date.now(),
+        name,
+        category,
+        feeBDT: fee,
+        deliverables,
+        todaySpendBDT: 0,
+        leads: "0 Leads",
+        status: "Active",
+        renewalDays: 30,
+        phone: "+8801700000000"
+      });
+
+      renderClientCards();
+      closeClientModal();
+      e.target.reset();
+      lucide.createIcons();
+    }
+
+    // Search
+    function handleSearch(query) {
+      const q = query.toLowerCase();
+      const filtered = clientsData.filter(c => 
+        c.name.toLowerCase().includes(q) || 
+        c.category.toLowerCase().includes(q) ||
+        c.deliverables.toLowerCase().includes(q)
+      );
+      renderClientCards(filtered);
+    }
+
+    // Content Pipeline Actions
+    function approveCard(cardId, clientName, title) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.remove();
+        document.getElementById('header-pending-count').innerText = "0";
+        document.getElementById('pipeline-pending-badge').innerText = "0";
+
+        const approvedList = document.getElementById('approved-cards-list');
+        const approvedCountEl = document.getElementById('pipeline-approved-badge');
+        approvedCountEl.innerText = Number(approvedCountEl.innerText) + 1;
+
+        approvedList.innerHTML += `
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 shadow-md">
+            <div class="flex justify-between items-start">
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded">${clientName}</span>
+              <span class="text-[10px] text-slate-400">Scheduled Now</span>
+            </div>
+            <h5 class="text-xs font-bold text-slate-200">"${title}"</h5>
+            <div class="flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Approved & Ready for Meta
+            </div>
+          </div>
+        `;
+        lucide.createIcons();
+      }
+    }
+
+    function requestChanges(client) {
+      alert(`Revision notification ping sent to the copy team for ${client}!`);
+    }
+
+    function addNewCreativePrompt() {
+      const title = prompt("Enter Creative/Ad Title:");
+      if (title) {
+        const list = document.getElementById('pending-cards-list');
+        list.innerHTML += `
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 shadow-md">
+            <span class="text-[10px] font-bold uppercase px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded">New Draft</span>
+            <h5 class="text-xs font-bold text-slate-200">"${title}"</h5>
+            <p class="text-[11px] text-slate-400">Waiting for agency visual review</p>
+          </div>
+        `;
+        lucide.createIcons();
+      }
+    }
+
+    // WhatsApp Dispatch
+    function sendWhatsAppSummary() {
+      const msg = encodeURIComponent(
+        `*KUTIKUTI MEDIA - DAILY CAMPAIGN REPORT*\n` +
+        `Date: Oct 20, 2026\n\n` +
+        `• Active Client: Shadmart Fashion\n` +
+        `• Today's Ad Spend: ৳৪,২০০ BDT\n` +
+        `• Direct Messages: ৮৪ টি\n` +
+        `• Avg Cost / Message: ৳৫০.০০\n` +
+        `• Status: Highly Scalable (ROAS 3.4x)\n\n` +
+        `Your campaigns are performing optimally! Have any questions? Let us know.`
+      );
+      window.open(`https://wa.me/8801711000000?text=${msg}`, '_blank');
+    }
+
+    // Interactive Spend Chart Setup (Chart.js)
+    let chartInstance = null;
+    function renderSpendChart() {
+      if (chartInstance) return;
+      const ctx = document.getElementById('spendChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'],
+          datasets: [
+            {
+              label: 'Daily Ad Spend (BDT)',
+              data: [6200, 7800, 8100, 7500, 9100, 8900, 9840],
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              fill: true,
+              tension: 0.35,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Generated Messages / Leads',
+              data: [85, 110, 125, 115, 145, 150, 165],
+              borderColor: '#10b981',
+              borderDash: [5, 5],
+              tension: 0.35,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#94a3b8', font: { family: 'Plus Jakarta Sans', size: 11 } }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#64748b' },
+              grid: { color: 'rgba(51, 65, 85, 0.2)' }
+            },
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              ticks: { color: '#64748b' },
+              grid: { color: 'rgba(51, 65, 85, 0.2)' }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              ticks: { color: '#10b981' },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
+    // On Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderClientCards();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
